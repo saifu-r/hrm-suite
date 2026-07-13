@@ -3,9 +3,12 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { API_BASE_URL } from "@/lib/api";
 import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
+import { canWrite, Role } from "@/lib/roles";
 
-type Device   = { id: number; name: string };
-type Shift    = { id: number; name: string };
+type Device = { id: number; name: string };
+type Shift = { id: number; name: string };
+
 
 type Employee = {
   id: number;
@@ -25,25 +28,29 @@ type FormData = {
 };
 
 const avatarColors = [
-  { bg: "bg-blue-50",   text: "text-blue-600"   },
-  { bg: "bg-green-50",  text: "text-green-700"  },
+  { bg: "bg-blue-50", text: "text-blue-600" },
+  { bg: "bg-green-50", text: "text-green-700" },
   { bg: "bg-orange-50", text: "text-orange-600" },
   { bg: "bg-purple-50", text: "text-purple-600" },
-  { bg: "bg-pink-50",   text: "text-pink-600"   },
+  { bg: "bg-pink-50", text: "text-pink-600" },
 ];
 
 function getAvatarColor(id: number) { return avatarColors[id % avatarColors.length]; }
-function getInitials(name: string)  { return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2); }
+function getInitials(name: string) { return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2); }
+
+
 
 export default function EmployeesPage() {
-  const [employees, setEmployees]     = useState<Employee[]>([]);
-  const [shifts, setShifts]           = useState<Shift[]>([]);
-  const [loading, setLoading]         = useState(true);
-  const [search, setSearch]           = useState("");
-  const [message, setMessage]         = useState<{ text: string; ok: boolean } | null>(null);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [shifts, setShifts] = useState<Shift[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const [form, setForm]               = useState<FormData>({ name: "", shift_id: "", is_active: true });
-  const [saving, setSaving]           = useState(false);
+  const [form, setForm] = useState<FormData>({ name: "", shift_id: "", is_active: true });
+  const [saving, setSaving] = useState(false);
+  const { user } = useAuth();
+  const canEdit = canWrite(user?.role as Role, 'employees');
 
   const fetchAll = useCallback(async () => {
     try {
@@ -51,7 +58,7 @@ export default function EmployeesPage() {
         apiFetch(`/employees`),
         apiFetch(`/shifts`),
       ]);
-      const empJson   = await empRes.json();
+      const empJson = await empRes.json();
       const shiftJson = await shiftRes.json();
       setEmployees(empJson.data);
       setShifts(shiftJson.data);
@@ -66,13 +73,17 @@ export default function EmployeesPage() {
 
   const filtered = useMemo(() =>
     employees.filter((e) => e.name.toLowerCase().includes(search.toLowerCase())),
-  [employees, search]);
+    [employees, search]);
+
+
+
+
 
   function openEditModal(employee: Employee) {
     setEditingEmployee(employee);
     setForm({
-      name:      employee.name,
-      shift_id:  employee.shift_id?.toString() ?? "",
+      name: employee.name,
+      shift_id: employee.shift_id?.toString() ?? "",
       is_active: employee.is_active,
     });
   }
@@ -86,11 +97,11 @@ export default function EmployeesPage() {
     setSaving(true);
     try {
       const res = await apiFetch(`/employees/${editingEmployee.id}`, {
-        method:  "PUT",
+        method: "PUT",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body:    JSON.stringify({
-          name:      form.name,
-          shift_id:  form.shift_id || null,
+        body: JSON.stringify({
+          name: form.name,
+          shift_id: form.shift_id || null,
           is_active: form.is_active,
         }),
       });
@@ -131,9 +142,8 @@ export default function EmployeesPage() {
 
       {/* Message */}
       {message && (
-        <div className={`flex items-center gap-2 text-sm px-4 py-3 rounded-lg mb-5 ${
-          message.ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"
-        }`}>
+        <div className={`flex items-center gap-2 text-sm px-4 py-3 rounded-lg mb-5 ${message.ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"
+          }`}>
           <i className={`ti ${message.ok ? "ti-circle-check" : "ti-alert-circle"} text-base`} aria-hidden="true" />
           {message.text}
         </div>
@@ -213,12 +223,11 @@ export default function EmployeesPage() {
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          <button
-                            onClick={() => openEditModal(emp)}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition-colors"
-                          >
-                            <i className="ti ti-edit text-sm" aria-hidden="true" />
-                          </button>
+                          {canEdit && (
+                            <button onClick={() => openEditModal(emp)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+                              <i className="ti ti-edit text-sm" />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );
@@ -228,93 +237,94 @@ export default function EmployeesPage() {
             </div>
           )}
         </div>
-      )}
+      )
+      }
 
       {/* Edit modal */}
-      {editingEmployee && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-              <div>
-                <h2 className="text-base font-medium text-gray-900">Edit employee</h2>
-                <p className="text-xs text-gray-400 mt-0.5">ID: {editingEmployee.device_user_id}</p>
-              </div>
-              <button onClick={closeModal} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
-                <i className="ti ti-x text-base" aria-hidden="true" />
-              </button>
-            </div>
-
-            <div className="px-6 py-5 flex flex-col gap-4">
-              {/* Name */}
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">Name</label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
-                />
+      {
+        editingEmployee && (
+          <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl">
+              <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+                <div>
+                  <h2 className="text-base font-medium text-gray-900">Edit employee</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">ID: {editingEmployee.device_user_id}</p>
+                </div>
+                <button onClick={closeModal} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+                  <i className="ti ti-x text-base" aria-hidden="true" />
+                </button>
               </div>
 
-              {/* Shift */}
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">Shift</label>
-                <select
-                  value={form.shift_id}
-                  onChange={(e) => setForm((p) => ({ ...p, shift_id: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
-                >
-                  <option value="">No shift</option>
-                  {shifts.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
-              </div>
+              <div className="px-6 py-5 flex flex-col gap-4">
+                {/* Name */}
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1.5">Name</label>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
 
-              {/* Active toggle */}
-              <div>
-                <label className="block text-xs text-gray-500 mb-1.5">Status</label>
-                <div className="flex rounded-lg border border-gray-200 overflow-hidden">
-                  <button
-                    onClick={() => setForm((p) => ({ ...p, is_active: true }))}
-                    className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                      form.is_active
+                {/* Shift */}
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1.5">Shift</label>
+                  <select
+                    value={form.shift_id}
+                    onChange={(e) => setForm((p) => ({ ...p, shift_id: e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value="">No shift</option>
+                    {shifts.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Active toggle */}
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1.5">Status</label>
+                  <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+                    <button
+                      onClick={() => setForm((p) => ({ ...p, is_active: true }))}
+                      className={`flex-1 py-2 text-sm font-medium transition-colors ${form.is_active
                         ? "bg-green-50 text-green-700"
                         : "bg-white text-gray-400 hover:bg-gray-50"
-                    }`}
-                  >
-                    Active
-                  </button>
-                  <button
-                    onClick={() => setForm((p) => ({ ...p, is_active: false }))}
-                    className={`flex-1 py-2 text-sm font-medium transition-colors border-l border-gray-200 ${
-                      !form.is_active
+                        }`}
+                    >
+                      Active
+                    </button>
+                    <button
+                      onClick={() => setForm((p) => ({ ...p, is_active: false }))}
+                      className={`flex-1 py-2 text-sm font-medium transition-colors border-l border-gray-200 ${!form.is_active
                         ? "bg-gray-100 text-gray-600"
                         : "bg-white text-gray-400 hover:bg-gray-50"
-                    }`}
-                  >
-                    Inactive
-                  </button>
+                        }`}
+                    >
+                      Inactive
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100">
-              <button onClick={closeModal} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving || !form.name.trim()}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                {saving && <i className="ti ti-loader-2 animate-spin text-sm" aria-hidden="true" />}
-                {saving ? "Saving..." : "Save"}
-              </button>
+              <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100">
+                <button onClick={closeModal} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving || !form.name.trim()}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {saving && <i className="ti ti-loader-2 animate-spin text-sm" aria-hidden="true" />}
+                  {saving ? "Saving..." : "Save"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }

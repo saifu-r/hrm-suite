@@ -3,6 +3,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { canAccess, Role } from "@/lib/roles";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -10,8 +11,20 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading && !user && pathname !== "/login") {
+    if (loading) return;
+
+    // Not logged in → go to login
+    if (!user && pathname !== "/login") {
       router.push("/login");
+      return;
+    }
+
+    // Logged in but wrong role for this page → go to dashboard
+    if (user && pathname !== "/login") {
+      const allowed = canAccess(user.role as Role, pathname);
+      if (!allowed) {
+        router.push("/");
+      }
     }
   }, [user, loading, pathname]);
 
