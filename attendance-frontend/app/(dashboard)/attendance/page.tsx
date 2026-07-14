@@ -53,6 +53,7 @@ export default function AttendancePage() {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   async function fetchSummary() {
     setLoading(true);
@@ -99,6 +100,31 @@ export default function AttendancePage() {
     URL.revokeObjectURL(url);
   }
 
+  async function handleSync() {
+    setSyncing(true);
+    try {
+      const devRes = await apiFetch("/devices");
+      const devJson = await devRes.json();
+      const device = devJson.data[0];
+
+      if (!device) {
+        setError("No device found.");
+        return;
+      }
+
+      const res = await apiFetch(`/devices/${device.id}/sync`, { method: "POST" });
+      if (res.ok) {
+        fetchSummary(); // refresh table after sync
+      } else {
+        setError("Sync failed.");
+      }
+    } catch {
+      setError("Could not reach the device.");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   return (
     <div>
       {/* Header */}
@@ -107,13 +133,23 @@ export default function AttendancePage() {
           <h1 className="text-xl font-medium text-gray-900">Attendance summary</h1>
           <p className="text-sm text-gray-400 mt-0.5">Daily check-in and check-out records</p>
         </div>
-        <button
-          onClick={handleExportCSV}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          <i className="ti ti-download text-base" aria-hidden="true" />
-          Export CSV
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <i className={`ti ti-refresh text-base ${syncing ? "animate-spin" : ""}`} aria-hidden="true" />
+            {syncing ? "Syncing..." : "Sync"}
+          </button>
+          <button
+            onClick={handleExportCSV}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <i className="ti ti-download text-base" aria-hidden="true" />
+            Export CSV
+          </button>
+        </div>
       </div>
 
       {/* Filters */}

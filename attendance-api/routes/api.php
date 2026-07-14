@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AttendanceSummaryController;
@@ -21,8 +22,11 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
+    
+
     // All admin roles
     Route::middleware('role:super_admin,company_admin,hr,manager')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'index']);
         Route::get('/attendance/summary', [AttendanceSummaryController::class, 'index']);
         Route::get('/employees', [EmployeeController::class, 'index']);
         Route::get('/shifts', [ShiftController::class, 'index']);

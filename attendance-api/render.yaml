@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: nexus-api
+    env: php
+    region: singapore
+    plan: free
+    buildCommand: composer install --no-dev --optimize-autoloader && php artisan config:clear && php artisan route:clear && php artisan view:clear
+    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false

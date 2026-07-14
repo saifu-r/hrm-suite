@@ -51,6 +51,10 @@ export default function EmployeesPage() {
   const [saving, setSaving] = useState(false);
   const { user } = useAuth();
   const canEdit = canWrite(user?.role as Role, 'employees');
+  const [syncing, setSyncing] = useState<"attendance" | "employees" | null>(null);
+  const [syncMsg, setSyncMsg] = useState<{ text: string; ok: boolean } | null>(null);
+
+
 
   const fetchAll = useCallback(async () => {
     try {
@@ -120,6 +124,37 @@ export default function EmployeesPage() {
     }
   }
 
+  // Add sync function
+  async function handleSync(type: "attendance" | "employees") {
+    setSyncing(type);
+    setSyncMsg(null);
+    try {
+      // Get first device — or you can loop all devices
+      const devRes = await apiFetch("/devices");
+      const devJson = await devRes.json();
+      const device = devJson.data[0];
+
+      if (!device) {
+        setSyncMsg({ text: "No device found.", ok: false });
+        return;
+      }
+
+      const res = await apiFetch(`/devices/${device.id}/sync`, { method: "POST" });
+      const json = await res.json();
+
+      if (res.ok) {
+        setSyncMsg({ text: `${type === "employees" ? "Employees" : "Attendance"} synced successfully.`, ok: true });
+        fetchAll();
+      } else {
+        setSyncMsg({ text: json.message ?? "Sync failed.", ok: false });
+      }
+    } catch {
+      setSyncMsg({ text: "Could not reach the device.", ok: false });
+    } finally {
+      setSyncing(null);
+    }
+  }
+
   return (
     <div>
       {/* Header */}
@@ -128,17 +163,39 @@ export default function EmployeesPage() {
           <h1 className="text-xl font-medium text-gray-900">Employees</h1>
           <p className="text-sm text-gray-400 mt-0.5">All employees synced from attendance devices</p>
         </div>
-        <div className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg w-56">
-          <i className="ti ti-search text-gray-400 text-sm" aria-hidden="true" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search employees..."
-            className="border-none outline-none text-sm text-gray-700 bg-transparent w-full placeholder-gray-400"
-          />
+        <div className="flex items-center gap-2">
+          {/* Sync buttons */}
+          <button
+            onClick={() => handleSync("employees")}
+            disabled={syncing !== null}
+            className="flex items-center gap-2 px-3 py-2 bg-green-50 text-green-700 border border-green-100 rounded-lg text-sm hover:bg-green-100 transition-colors disabled:opacity-50"
+          >
+            <i className={`ti ti-users text-sm ${syncing === "employees" ? "animate-spin" : ""}`} aria-hidden="true" />
+            {syncing === "employees" ? "Syncing..." : "Sync Employees"}
+          </button>
+
+          {/* Search */}
+          <div className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg w-56">
+            <i className="ti ti-search text-gray-400 text-sm" aria-hidden="true" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search employees..."
+              className="border-none outline-none text-sm text-gray-700 bg-transparent w-full placeholder-gray-400"
+            />
+          </div>
         </div>
       </div>
+
+      {/* Sync message */}
+      {syncMsg && (
+        <div className={`flex items-center gap-2 text-sm px-4 py-3 rounded-lg mb-5 ${syncMsg.ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"
+          }`}>
+          <i className={`ti ${syncMsg.ok ? "ti-circle-check" : "ti-alert-circle"} text-base`} aria-hidden="true" />
+          {syncMsg.text}
+        </div>
+      )}
 
       {/* Message */}
       {message && (
