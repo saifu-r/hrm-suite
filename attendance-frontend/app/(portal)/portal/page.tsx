@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+import PortalNav from "../../components/PortalNav";
 
 type TodayRecord = {
   check_in:      string | null;
@@ -151,27 +152,28 @@ export default function PortalHomePage() {
       )}
 
       {/* Bottom nav */}
-      <BottomNav active="home" />
+      {/* <BottomNav active="home" /> */}
+      <PortalNav />
     </div>
   );
 }
 
-function BottomNav({ active }: { active: "home" | "history" | "profile" }) {
-  const items = [
-    { key: "home",    href: "/portal",         icon: "ti-home",     label: "Home"    },
-    { key: "history", href: "/portal/history", icon: "ti-calendar", label: "History" },
-    { key: "profile", href: "/portal/profile", icon: "ti-user",     label: "Profile" },
-  ];
-  return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex pb-3 pt-2">
-      {items.map((item) => (
-        <Link key={item.key} href={item.href} className={`flex-1 flex flex-col items-center gap-0.5 pt-1 ${
-          active === item.key ? "text-blue-600" : "text-gray-400"
-        }`}>
-          <i className={`ti ${item.icon} text-xl`} aria-hidden="true" />
-          <span className="text-xs font-medium">{item.label}</span>
-        </Link>
-      ))}
-    </nav>
-  );
-}
+// function BottomNav({ active }: { active: "home" | "history" | "profile" }) {
+//   const items = [
+//     { key: "home",    href: "/portal",         icon: "ti-home",     label: "Home"    },
+//     { key: "history", href: "/portal/history", icon: "ti-calendar", label: "History" },
+//     { key: "profile", href: "/portal/profile", icon: "ti-user",     label: "Profile" },
+//   ];
+//   return (
+//     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex pb-3 pt-2">
+//       {items.map((item) => (
+//         <Link key={item.key} href={item.href} className={`flex-1 flex flex-col items-center gap-0.5 pt-1 ${
+//           active === item.key ? "text-blue-600" : "text-gray-400"
+//         }`}>
+//           <i className={`ti ${item.icon} text-xl`} aria-hidden="true" />
+//           <span className="text-xs font-medium">{item.label}</span>
+//         </Link>
+//       ))}
+//     </nav>
+//   );
+// }

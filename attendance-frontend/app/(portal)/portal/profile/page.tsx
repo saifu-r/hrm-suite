@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import PortalNav from "../../../components/PortalNav";
 
 type Profile = {
   name:      string;
@@ -91,7 +92,7 @@ export default function PortalProfilePage() {
       )}
 
       {/* Bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex pb-3 pt-2">
+      {/* <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex pb-3 pt-2">
         {[
           { href: "/portal",         icon: "ti-home",     label: "Home",    active: false },
           { href: "/portal/history", icon: "ti-calendar", label: "History", active: false },
@@ -104,7 +105,8 @@ export default function PortalProfilePage() {
             <span className="text-xs font-medium">{item.label}</span>
           </a>
         ))}
-      </nav>
+      </nav> */}
+      <PortalNav />
     </div>
   );
 }

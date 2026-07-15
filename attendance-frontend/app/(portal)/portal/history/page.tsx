@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
 import Link from "next/link";
+import PortalNav from "../../../components/PortalNav";
 
 type Record = {
   date:          string;
@@ -117,7 +118,7 @@ export default function PortalHistoryPage() {
       )}
 
       {/* Bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex pb-3 pt-2">
+      {/* <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex pb-3 pt-2">
         {[
           { href: "/portal",         icon: "ti-home",     label: "Home",    active: false },
           { href: "/portal/history", icon: "ti-calendar", label: "History", active: true  },
@@ -130,7 +131,8 @@ export default function PortalHistoryPage() {
             <span className="text-xs font-medium">{item.label}</span>
           </a>
         ))}
-      </nav>
+      </nav> */}
+      <PortalNav />
     </div>
   );
 }

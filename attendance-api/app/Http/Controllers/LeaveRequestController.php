@@ -149,6 +149,7 @@ class LeaveRequestController extends Controller
             ->where('year', now()->year)
             ->get()
             ->map(fn ($b) => [
+                'leave_type_id'  => $b->leave_type_id, 
                 'leave_type'     => $b->leaveType->name,
                 'color'          => $b->leaveType->color,
                 'total_days'     => $b->total_days,

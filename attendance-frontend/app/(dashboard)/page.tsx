@@ -61,7 +61,7 @@ export default function DashboardPage() {
   const { user } = useAuth();
 
   const [stats, setStats]       = useState<Stats | null>(null);
-  const [activity, setActivity] = useState<ActivityRecord[]>([]);
+ const [activity, setActivity] = useState<ActivityRecord[]>([]);
   const [devices, setDevices]   = useState<Device[]>([]);
   const [loading, setLoading]   = useState(true);
   const [syncing, setSyncing]   = useState<number | null>(null);
@@ -72,7 +72,7 @@ export default function DashboardPage() {
       const res  = await apiFetch("/dashboard");
       const json = await res.json();
       setStats(json.stats);
-      setActivity(json.today_activity);
+      setActivity(json.today_activity ?? []);
       setDevices(json.devices);
     } catch {
       // silently fail
