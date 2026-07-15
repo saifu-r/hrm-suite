@@ -12,7 +12,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required',
         ]);
 
@@ -31,15 +31,27 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        // return response()->json([
+        //     'token' => $token,
+        //     'user'  => [
+        //         'id'      => $user->id,
+        //         'name'    => $user->name,
+        //         'email'   => $user->email,
+        //         'role'    => $user->role,
+        //         'company' => $user->company?->name,
+        //         'timezone'=> $user->company?->timezone,
+        //     ],
+        // ]);
         return response()->json([
             'token' => $token,
-            'user'  => [
-                'id'      => $user->id,
-                'name'    => $user->name,
-                'email'   => $user->email,
-                'role'    => $user->role,
+            'redirect' => $user->role === 'employee' ? '/portal' : '/',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
                 'company' => $user->company?->name,
-                'timezone'=> $user->company?->timezone,
+                'timezone' => $user->company?->timezone,
             ],
         ]);
     }
@@ -54,11 +66,11 @@ class AuthController extends Controller
     {
         $user = $request->user()->load('company');
         return response()->json([
-            'id'       => $user->id,
-            'name'     => $user->name,
-            'email'    => $user->email,
-            'role'     => $user->role,
-            'company'  => $user->company?->name,
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role,
+            'company' => $user->company?->name,
             'timezone' => $user->company?->timezone,
         ]);
     }

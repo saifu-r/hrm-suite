@@ -10,6 +10,7 @@ type User = {
   email: string;
   role: string;
   is_active: boolean;
+  employee_id: number | null;
   created_at: string;
 };
 
@@ -19,28 +20,36 @@ type FormData = {
   password: string;
   role: string;
   is_active: boolean;
+  employee_id: string;
+};
+
+type AvailableEmployee = {
+  id: number;
+  name: string;
+  device_user_id: string;
 };
 
 const emptyForm: FormData = {
-  name:      "",
-  email:     "",
-  password:  "",
-  role:      "hr",
+  name: "",
+  email: "",
+  password: "",
+  role: "employee",
   is_active: true,
+  employee_id: "",
 };
 
 const roleLabels: Record<string, string> = {
-  super_admin:   "Super Admin",
+  super_admin: "Super Admin",
   company_admin: "Company Admin",
-  hr:            "HR",
-  manager:       "Manager",
+  hr: "HR",
+  manager: "Manager",
 };
 
 const roleColors: Record<string, string> = {
-  super_admin:   "bg-purple-50 text-purple-700",
+  super_admin: "bg-purple-50 text-purple-700",
   company_admin: "bg-blue-50 text-blue-700",
-  hr:            "bg-green-50 text-green-700",
-  manager:       "bg-orange-50 text-orange-700",
+  hr: "bg-green-50 text-green-700",
+  manager: "bg-orange-50 text-orange-700",
 };
 
 function getInitials(name: string): string {
@@ -49,18 +58,19 @@ function getInitials(name: string): string {
 
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
-  const [users, setUsers]     = useState<User[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
-  const [form, setForm]       = useState<FormData>(emptyForm);
-  const [errors, setErrors]   = useState<Partial<FormData>>({});
-  const [saving, setSaving]   = useState(false);
+  const [form, setForm] = useState<FormData>(emptyForm);
+  const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [saving, setSaving] = useState(false);
+  const [availableEmployees, setAvailableEmployees] = useState<AvailableEmployee[]>([]);
 
   const fetchUsers = useCallback(async () => {
     try {
-      const res  = await apiFetch("/users");
+      const res = await apiFetch("/users");
       const json = await res.json();
       setUsers(json.data);
     } catch {
@@ -72,24 +82,32 @@ export default function UsersPage() {
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-  function openAddModal() {
+  async function openAddModal() {
     setEditing(null);
     setForm(emptyForm);
     setErrors({});
     setShowModal(true);
+    // Fetch unlinked employees
+    const res = await apiFetch("/users/available-employees");
+    const json = await res.json();
+    setAvailableEmployees(json.data);
   }
 
-  function openEditModal(user: User) {
+  async function openEditModal(user: User) {
     setEditing(user);
     setForm({
-      name:      user.name,
-      email:     user.email,
-      password:  "",
-      role:      user.role,
+      name: user.name,
+      email: user.email,
+      password: "",
+      role: user.role,
       is_active: user.is_active,
+      employee_id: user.employee_id?.toString() ?? "",
     });
     setErrors({});
     setShowModal(true);
+    const res = await apiFetch("/users/available-employees");
+    const json = await res.json();
+    setAvailableEmployees(json.data);
   }
 
   function closeModal() {
@@ -108,7 +126,7 @@ export default function UsersPage() {
 
   function validate(): boolean {
     const e: Partial<FormData> = {};
-    if (!form.name.trim())  e.name  = "Name is required.";
+    if (!form.name.trim()) e.name = "Name is required.";
     if (!form.email.trim()) e.email = "Email is required.";
     if (!editing && !form.password) e.password = "Password is required.";
     if (!form.role) e.role = "Role is required.";
@@ -120,20 +138,21 @@ export default function UsersPage() {
     if (!validate()) return;
     setSaving(true);
     try {
-      const url    = editing ? `/users/${editing.id}` : `/users`;
+      const url = editing ? `/users/${editing.id}` : `/users`;
       const method = editing ? "PUT" : "POST";
 
-      const body: Partial<FormData> = {
-        name:      form.name,
-        email:     form.email,
-        role:      form.role,
+      const body: Record<string, unknown> = {
+        name: form.name,
+        email: form.email,
+        role: form.role,
         is_active: form.is_active,
+        employee_id: form.employee_id || null,
       };
 
       // Only send password if filled
       if (form.password) body.password = form.password;
 
-      const res  = await apiFetch(url, {
+      const res = await apiFetch(url, {
         method,
         body: JSON.stringify(body),
       });
@@ -182,9 +201,8 @@ export default function UsersPage() {
 
       {/* Message */}
       {message && (
-        <div className={`flex items-center gap-2 text-sm px-4 py-3 rounded-lg mb-5 ${
-          message.ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"
-        }`}>
+        <div className={`flex items-center gap-2 text-sm px-4 py-3 rounded-lg mb-5 ${message.ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"
+          }`}>
           <i className={`ti ${message.ok ? "ti-circle-check" : "ti-alert-circle"} text-base`} aria-hidden="true" />
           {message.text}
         </div>
@@ -322,9 +340,8 @@ export default function UsersPage() {
                   value={form.name}
                   onChange={handleChange}
                   placeholder="e.g. John Doe"
-                  className={`w-full px-3 py-2.5 border rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
-                    errors.name ? "border-red-300" : "border-gray-200"
-                  }`}
+                  className={`w-full px-3 py-2.5 border rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${errors.name ? "border-red-300" : "border-gray-200"
+                    }`}
                 />
                 {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
               </div>
@@ -338,9 +355,8 @@ export default function UsersPage() {
                   value={form.email}
                   onChange={handleChange}
                   placeholder="e.g. john@company.com"
-                  className={`w-full px-3 py-2.5 border rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
-                    errors.email ? "border-red-300" : "border-gray-200"
-                  }`}
+                  className={`w-full px-3 py-2.5 border rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${errors.email ? "border-red-300" : "border-gray-200"
+                    }`}
                 />
                 {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
               </div>
@@ -356,9 +372,8 @@ export default function UsersPage() {
                   value={form.password}
                   onChange={handleChange}
                   placeholder={editing ? "••••••••" : "Min 8 characters"}
-                  className={`w-full px-3 py-2.5 border rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${
-                    errors.password ? "border-red-300" : "border-gray-200"
-                  }`}
+                  className={`w-full px-3 py-2.5 border rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${errors.password ? "border-red-300" : "border-gray-200"
+                    }`}
                 />
                 {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
               </div>
@@ -372,6 +387,7 @@ export default function UsersPage() {
                   onChange={handleChange}
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
+                  <option value="employee">Employee</option>
                   <option value="hr">HR</option>
                   <option value="manager">Manager</option>
                   <option value="company_admin">Company Admin</option>
@@ -381,6 +397,29 @@ export default function UsersPage() {
                 </select>
               </div>
 
+              {/* Employee link — only show for employee role */}
+              {form.role === "employee" && (
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1.5">
+                    Link to employee
+                    <span className="text-gray-400 ml-1">(from device)</span>
+                  </label>
+                  <select
+                    name="employee_id"
+                    value={form.employee_id}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value="">Select employee</option>
+                    {availableEmployees.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.name} (ID: {emp.device_user_id})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               {/* Status — only show when editing */}
               {editing && (
                 <div>
@@ -388,21 +427,19 @@ export default function UsersPage() {
                   <div className="flex rounded-lg border border-gray-200 overflow-hidden">
                     <button
                       onClick={() => setForm((p) => ({ ...p, is_active: true }))}
-                      className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                        form.is_active
-                          ? "bg-green-50 text-green-700"
-                          : "bg-white text-gray-400 hover:bg-gray-50"
-                      }`}
+                      className={`flex-1 py-2 text-sm font-medium transition-colors ${form.is_active
+                        ? "bg-green-50 text-green-700"
+                        : "bg-white text-gray-400 hover:bg-gray-50"
+                        }`}
                     >
                       Active
                     </button>
                     <button
                       onClick={() => setForm((p) => ({ ...p, is_active: false }))}
-                      className={`flex-1 py-2 text-sm font-medium border-l border-gray-200 transition-colors ${
-                        !form.is_active
-                          ? "bg-gray-100 text-gray-600"
-                          : "bg-white text-gray-400 hover:bg-gray-50"
-                      }`}
+                      className={`flex-1 py-2 text-sm font-medium border-l border-gray-200 transition-colors ${!form.is_active
+                        ? "bg-gray-100 text-gray-600"
+                        : "bg-white text-gray-400 hover:bg-gray-50"
+                        }`}
                     >
                       Inactive
                     </button>

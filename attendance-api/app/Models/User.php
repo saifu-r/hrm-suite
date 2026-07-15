@@ -14,11 +14,12 @@ class User extends Authenticatable
 
     protected $fillable = [
         'company_id',
+        'employee_id',  // ← add this
         'name',
         'email',
         'password',
         'role',
-        'is_active'
+        'is_active',
     ];
 
     protected $hidden = [
@@ -28,7 +29,7 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password'          => 'hashed',
+        'password' => 'hashed',
     ];
 
     public function company()
@@ -37,12 +38,31 @@ class User extends Authenticatable
     }
 
     // Role helpers
-    public function isSuperAdmin():    bool { return $this->role === 'super_admin'; }
-    public function isCompanyAdmin():  bool { return $this->role === 'company_admin'; }
-    public function isHR():            bool { return $this->role === 'hr'; }
-    public function isManager():       bool { return $this->role === 'manager'; }
-    public function isEmployee():      bool { return $this->role === 'employee'; }
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+    public function isCompanyAdmin(): bool
+    {
+        return $this->role === 'company_admin';
+    }
+    public function isHR(): bool
+    {
+        return $this->role === 'hr';
+    }
+    public function isManager(): bool
+    {
+        return $this->role === 'manager';
+    }
+    public function isEmployee(): bool
+    {
+        return $this->role === 'employee';
+    }
 
+    public function employee()
+    {
+        return $this->belongsTo(\App\Models\Employee::class);
+    }
     public function isAdminLevel(): bool
     {
         return in_array($this->role, ['super_admin', 'company_admin', 'hr', 'manager']);

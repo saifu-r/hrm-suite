@@ -6,13 +6,29 @@ import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const router    = useRouter();
+  const router = useRouter();
 
-  const [email, setEmail]       = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError]       = useState<string | null>(null);
-  const [loading, setLoading]   = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
+
+  // async function handleLogin() {
+  //   if (!email || !password) {
+  //     setError("Please enter your email and password.");
+  //     return;
+  //   }
+  //   setLoading(true);
+  //   setError(null);
+  //   const err = await login(email, password);
+  //   if (err) {
+  //     setError(err);
+  //     setLoading(false);
+  //   } else {
+  //     router.push("/");
+  //   }
+  // }
 
   async function handleLogin() {
     if (!email || !password) {
@@ -21,12 +37,12 @@ export default function LoginPage() {
     }
     setLoading(true);
     setError(null);
-    const err = await login(email, password);
-    if (err) {
-      setError(err);
+    const { error, redirect } = await login(email, password);
+    if (error) {
+      setError(error);
       setLoading(false);
     } else {
-      router.push("/");
+      router.push(redirect);
     }
   }
 

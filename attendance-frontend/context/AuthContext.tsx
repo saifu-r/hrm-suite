@@ -5,11 +5,12 @@ import { AuthUser, getUser, getToken, saveAuth, clearAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api";
 
+
 type AuthContextType = {
-  user: AuthUser | null;
-  token: string | null;
-  login: (email: string, password: string) => Promise<string | null>;
-  logout: () => void;
+  user:    AuthUser | null;
+  token:   string | null;
+  login:   (email: string, password: string) => Promise<{ error: string | null; redirect: string }>;
+  logout:  () => void;
   loading: boolean;
 };
 
@@ -32,28 +33,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false);
   }, []);
 
-  async function login(email: string, password: string): Promise<string | null> {
-    try {
-      const res = await fetch(`${API_BASE_URL}/login`, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body:    JSON.stringify({ email, password }),
-      });
+async function login(email: string, password: string): Promise<{ error: string | null; redirect: string }> {
+  try {
+    const res  = await fetch(`${API_BASE_URL}/login`, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body:    JSON.stringify({ email, password }),
+    });
 
-      const json = await res.json();
+    const json = await res.json();
 
-      if (res.ok) {
-        saveAuth(json.token, json.user);
-        setToken(json.token);
-        setUser(json.user);
-        return null; // no error
-      } else {
-        return json.message ?? "Login failed.";
-      }
-    } catch {
-      return "Could not connect to the server.";
+    if (res.ok) {
+      saveAuth(json.token, json.user);
+      setToken(json.token);
+      setUser(json.user);
+      return { error: null, redirect: json.redirect ?? "/" };
+    } else {
+      return { error: json.message ?? "Login failed.", redirect: "/" };
     }
+  } catch {
+    return { error: "Could not connect to the server.", redirect: "/" };
   }
+}
 
   async function logout() {
     try {
