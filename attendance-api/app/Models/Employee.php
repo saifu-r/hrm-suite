@@ -3,13 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+// use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
 class Employee extends Model
 {
-    use SoftDeletes, LogsActivity;
+    // use SoftDeletes, LogsActivity;
     protected $fillable = [
         'company_id',
         'device_id',
@@ -17,7 +17,8 @@ class Employee extends Model
         'device_user_id',
         'name',
         'card_number',
-        'is_active',  // ← make sure this is here
+        'shift_id', 
+        'is_active',
     ];
 
     public function company()

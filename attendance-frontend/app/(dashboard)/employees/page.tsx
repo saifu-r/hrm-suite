@@ -102,16 +102,21 @@ export default function EmployeesPage() {
     try {
       const res = await apiFetch(`/employees/${editingEmployee.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
           name: form.name,
           shift_id: form.shift_id || null,
           is_active: form.is_active,
         }),
       });
+      const json = await res.json();
 
       if (res.ok) {
-        setMessage({ text: `${form.name} updated successfully.`, ok: true });
+        // Show warning if device was unreachable
+        if (json.warning) {
+          setMessage({ text: `Saved — but ${json.warning}`, ok: false });
+        } else {
+          setMessage({ text: `${form.name} updated successfully.`, ok: true });
+        }
         closeModal();
         fetchAll();
       } else {

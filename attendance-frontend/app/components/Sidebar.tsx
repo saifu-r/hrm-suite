@@ -12,6 +12,7 @@ const navItems = [
   { href: "/attendance", label: "Attendance", icon: "ti-calendar-stats" },
   { href: "/shifts", label: "Shift", icon: "ti-clock-hour-4" },
   { href: "/timetable", label: "Time table", icon: "ti-calendar-time" },
+   { href: "/leave",     label: "Leave",      icon: "ti-beach"            },
   { href: "/reports", label: "Reports", icon: "ti-file-analytics" },
   { href: "/users", label: "Users", icon: "ti-user-cog" },
   { href: "/settings", label: "Settings", icon: "ti-settings" },
