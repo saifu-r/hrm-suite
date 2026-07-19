@@ -12,6 +12,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\PortalController;
 use App\Http\Controllers\LeaveTypeController;
 use App\Http\Controllers\LeaveRequestController;
+use App\Http\Controllers\AttendanceCorrectionController;
 
 // Public
 Route::prefix('v1')->group(function () {
@@ -25,8 +26,6 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
-
-
     // Employee portal
     Route::middleware('role:employee')->prefix('portal')->group(function () {
         Route::get('/today', [PortalController::class, 'today']);
@@ -36,6 +35,9 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
         Route::get('/leave-balances', [LeaveRequestController::class, 'myBalances']);
         Route::get('/leave-requests', [LeaveRequestController::class, 'myRequests']);
         Route::post('/leave-requests', [LeaveRequestController::class, 'store']);
+
+        Route::get('/corrections', [AttendanceCorrectionController::class, 'myCorrections']);
+        Route::post('/corrections', [AttendanceCorrectionController::class, 'store']);
     });
 
     // All admin roles
@@ -55,6 +57,10 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
         // Leave requests — admin
         Route::get('/leave-requests', [LeaveRequestController::class, 'index']);
         Route::post('/leave-requests/{leaveRequest}/action', [LeaveRequestController::class, 'action']);
+
+        Route::get('/corrections', [AttendanceCorrectionController::class, 'index']);
+        Route::post('/corrections/{correction}/action', [AttendanceCorrectionController::class, 'action']);
+
     });
 
     // super_admin, company_admin, hr only

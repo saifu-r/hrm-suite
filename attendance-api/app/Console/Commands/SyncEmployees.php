@@ -9,7 +9,7 @@ use Rats\Zkteco\Lib\ZKTeco;
 
 class SyncEmployees extends Command
 {
-    protected $signature   = 'sync:employees';
+    protected $signature = 'sync:employees';
     protected $description = 'Sync employees from ZKTeco device';
 
     public function handle()
@@ -28,11 +28,11 @@ class SyncEmployees extends Command
                 continue;
             }
 
-            $deviceUserIds = collect($users)->pluck('userid')->map(fn ($id) => (string) $id);
+            $deviceUserIds = collect($users)->pluck('userid')->map(fn($id) => (string) $id);
 
             foreach ($users as $user) {
                 $deviceName = trim($user['name']);
-                $employee   = Employee::where('device_id', $device->id)
+                $employee = Employee::where('device_id', $device->id)
                     ->where('device_user_id', (string) $user['userid'])
                     ->first();
 
@@ -53,10 +53,10 @@ class SyncEmployees extends Command
 
                     // Update everything except name
                     $employee->update([
-                        'device_uid'  => $user['uid'],
+                        'device_uid' => $user['uid'],
                         'card_number' => $user['cardno'] ?? null,
-                        'company_id'  => $device->company_id,
-                        'is_active'   => true,
+                        'company_id' => $device->company_id,
+                        // 'is_active'   => true,
                     ]);
 
                 } else {
@@ -66,21 +66,22 @@ class SyncEmployees extends Command
                         : $deviceName;
 
                     Employee::create([
-                        'device_id'      => $device->id,
+                        'device_id' => $device->id,
                         'device_user_id' => (string) $user['userid'],
-                        'device_uid'     => $user['uid'],
-                        'name'           => $name,
-                        'card_number'    => $user['cardno'] ?? null,
-                        'company_id'     => $device->company_id,
-                        'is_active'      => true,
+                        'device_uid' => $user['uid'],
+                        'name' => $name,
+                        'card_number' => $user['cardno'] ?? null,
+                        'company_id' => $device->company_id,
+                        'is_active' => true,
                     ]);
 
                     $this->info("Added: {$name}");
                 }
             }
 
-            // Mark removed employees as inactive
+            // Only deactivate currently active employees removed from device
             $removed = Employee::where('device_id', $device->id)
+                ->where('is_active', true)  // ← only touch active ones
                 ->whereNotIn('device_user_id', $deviceUserIds)
                 ->get();
 
