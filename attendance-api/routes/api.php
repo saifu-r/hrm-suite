@@ -13,6 +13,7 @@ use App\Http\Controllers\PortalController;
 use App\Http\Controllers\LeaveTypeController;
 use App\Http\Controllers\LeaveRequestController;
 use App\Http\Controllers\AttendanceCorrectionController;
+use App\Http\Controllers\HolidayController;
 
 // Public
 Route::prefix('v1')->group(function () {
@@ -61,6 +62,8 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
         Route::get('/corrections', [AttendanceCorrectionController::class, 'index']);
         Route::post('/corrections/{correction}/action', [AttendanceCorrectionController::class, 'action']);
 
+
+
     });
 
     // super_admin, company_admin, hr only
@@ -72,6 +75,11 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
         Route::post('/timetables', [TimetableController::class, 'store']);
         Route::put('/timetables/{timetable}', [TimetableController::class, 'update']);
         Route::delete('/timetables/{timetable}', [TimetableController::class, 'destroy']);
+
+        Route::get('/holidays', [HolidayController::class, 'index']);
+        Route::post('/holidays', [HolidayController::class, 'store']);
+        Route::put('/holidays/{holiday}', [HolidayController::class, 'update']);
+        Route::delete('/holidays/{holiday}', [HolidayController::class, 'destroy']);
     });
 
     // super_admin, company_admin only

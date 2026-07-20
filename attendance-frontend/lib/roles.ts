@@ -12,6 +12,8 @@ export const pageRoles: Record<string, Role[]> = {
   '/settings': ['super_admin', 'company_admin'],
   '/users': ['super_admin', 'company_admin'],
   '/leave': ['super_admin', 'company_admin', 'hr'],
+  '/corrections': ['super_admin', 'company_admin', 'hr'],
+  '/holidays': ['super_admin', 'company_admin', 'hr'],
 };
 
 // Which roles can perform write actions

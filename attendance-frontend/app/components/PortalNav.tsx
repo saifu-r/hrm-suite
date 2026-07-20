@@ -4,10 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { href: "/portal",         icon: "ti-home",    label: "Home"    },
-  { href: "/portal/history", icon: "ti-calendar",label: "History" },
-  { href: "/portal/leave",   icon: "ti-beach",   label: "Leave"   },
-  { href: "/portal/profile", icon: "ti-user",    label: "Profile" },
+  { href: "/portal",             icon: "ti-home",          label: "Home"       },
+  { href: "/portal/history",     icon: "ti-calendar",      label: "History"    },
+  { href: "/portal/leave",       icon: "ti-beach",         label: "Leave"      },
+  { href: "/portal/corrections", icon: "ti-clock-edit",    label: "Correction" },
+  { href: "/portal/profile",     icon: "ti-user",          label: "Profile"    },
 ];
 
 export default function PortalNav() {

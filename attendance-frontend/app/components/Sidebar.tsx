@@ -12,7 +12,9 @@ const navItems = [
   { href: "/attendance", label: "Attendance", icon: "ti-calendar-stats" },
   { href: "/shifts", label: "Shift", icon: "ti-clock-hour-4" },
   { href: "/timetable", label: "Time table", icon: "ti-calendar-time" },
-   { href: "/leave",     label: "Leave",      icon: "ti-beach"            },
+  { href: "/holidays", label: "Holidays", icon: "ti-calendar-event" },
+  { href: "/leave", label: "Leave", icon: "ti-beach" },
+  { href: "/corrections", label: "Corrections", icon: "ti-clock-edit" },
   { href: "/reports", label: "Reports", icon: "ti-file-analytics" },
   { href: "/users", label: "Users", icon: "ti-user-cog" },
   { href: "/settings", label: "Settings", icon: "ti-settings" },
@@ -47,8 +49,8 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors ${isActive
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+                ? "bg-blue-50 text-blue-600"
+                : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
                 }`}
             >
               <i className={`ti ${item.icon} text-base`} aria-hidden="true" />

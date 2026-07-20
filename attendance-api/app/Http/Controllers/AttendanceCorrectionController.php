@@ -27,7 +27,7 @@ class AttendanceCorrectionController extends Controller
     // Employee — submit correction
     public function store(Request $request)
     {
-        $user     = $request->user();
+        $user = $request->user();
         $employee = $user->employee;
 
         if (!$employee) {
@@ -35,10 +35,10 @@ class AttendanceCorrectionController extends Controller
         }
 
         $data = $request->validate([
-            'date'                => 'required|date|after_or_equal:' . now()->subDays(7)->toDateString() . '|before_or_equal:today',
-            'requested_check_in'  => 'nullable|date_format:H:i',
+            'date' => 'required|date|after_or_equal:' . now()->subDays(7)->toDateString() . '|before_or_equal:today',
+            'requested_check_in' => 'nullable|date_format:H:i',
             'requested_check_out' => 'nullable|date_format:H:i',
-            'reason'              => 'required|string|max:1000',
+            'reason' => 'required|string|max:1000',
         ]);
 
         if (empty($data['requested_check_in']) && empty($data['requested_check_out'])) {
@@ -60,20 +60,20 @@ class AttendanceCorrectionController extends Controller
         }
 
         // Get current attendance for that day
-        $service    = app(AttendanceSummaryService::class);
-        $summaries  = $service->getSummaries($data['date'], $data['date'], $employee->id);
-        $today      = $summaries[0] ?? null;
+        $service = app(AttendanceSummaryService::class);
+        $summaries = $service->getSummaries($data['date'], $data['date'], $employee->id);
+        $today = $summaries[0] ?? null;
 
         $correction = AttendanceCorrection::create([
-            'company_id'          => $user->company_id,
-            'employee_id'         => $employee->id,
-            'date'                => $data['date'],
-            'current_check_in'    => $today?->check_in ?? null,
-            'current_check_out'   => $today?->check_out ?? null,
-            'requested_check_in'  => $data['requested_check_in'] ?? null,
+            'company_id' => $user->company_id,
+            'employee_id' => $employee->id,
+            'date' => $data['date'],
+            'current_check_in' => $today?->check_in ?? null,
+            'current_check_out' => $today?->check_out ?? null,
+            'requested_check_in' => $data['requested_check_in'] ?? null,
             'requested_check_out' => $data['requested_check_out'] ?? null,
-            'reason'              => $data['reason'],
-            'status'              => 'pending',
+            'reason' => $data['reason'],
+            'status' => 'pending',
         ]);
 
         return response()->json(['data' => $correction], 201);
@@ -83,7 +83,7 @@ class AttendanceCorrectionController extends Controller
     public function action(Request $request, AttendanceCorrection $correction)
     {
         $data = $request->validate([
-            'action'           => 'required|in:approved,rejected',
+            'action' => 'required|in:approved,rejected',
             'rejection_reason' => 'required_if:action,rejected|nullable|string',
         ]);
 
@@ -96,9 +96,9 @@ class AttendanceCorrectionController extends Controller
         }
 
         $correction->update([
-            'status'           => $data['action'],
-            'approved_by'      => auth()->id(),
-            'approved_at'      => now(),
+            'status' => $data['action'],
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
             'rejection_reason' => $data['rejection_reason'] ?? null,
         ]);
 
@@ -126,57 +126,50 @@ class AttendanceCorrectionController extends Controller
     // Apply approved correction to attendance logs
     private function applyCorrection(AttendanceCorrection $correction): void
     {
-        $date       = $correction->date->toDateString();
+        $date = $correction->date->toDateString();
         $employeeId = $correction->employee_id;
 
-        // Get existing logs for that day
         $logs = AttendanceLog::where('employee_id', $employeeId)
             ->whereDate('attendance_time', $date)
             ->orderBy('attendance_time')
             ->get();
 
-        // Apply check-in correction
         if ($correction->requested_check_in) {
-            $checkInTime = $date . ' ' . $correction->requested_check_in . ':00';
+            $checkInTime = $date . ' ' . $correction->requested_check_in;
 
             if ($logs->isNotEmpty()) {
-                // Update the first log (check-in)
                 $logs->first()->update([
                     'attendance_time' => $checkInTime,
                 ]);
             } else {
-                // No logs exist — create one
                 AttendanceLog::create([
-                    'company_id'    => $correction->company_id,
-                    'employee_id'   => $employeeId,
-                    'device_id'     => $correction->employee->device_id,
-                    'device_log_uid'=> 'correction_' . $correction->id . '_in',
-                    'attendance_time'=> $checkInTime,
-                    'state'         => 1,
-                    'type'          => 0,
+                    'company_id' => $correction->company_id,
+                    'employee_id' => $employeeId,
+                    'device_id' => $correction->employee->device_id,
+                    'device_log_uid' => -($correction->id * 10 + 1), // e.g. -11 for correction 1 check-in
+                    'attendance_time' => $checkInTime,
+                    'state' => 1,
+                    'type' => 0,
                 ]);
             }
         }
 
-        // Apply check-out correction
         if ($correction->requested_check_out) {
-            $checkOutTime = $date . ' ' . $correction->requested_check_out . ':00';
+            $checkOutTime = $date . ' ' . $correction->requested_check_out;
 
             if ($logs->count() > 1) {
-                // Update the last log (check-out)
                 $logs->last()->update([
                     'attendance_time' => $checkOutTime,
                 ]);
             } else {
-                // Only one log or none — create check-out log
                 AttendanceLog::create([
-                    'company_id'    => $correction->company_id,
-                    'employee_id'   => $employeeId,
-                    'device_id'     => $correction->employee->device_id,
-                    'device_log_uid'=> 'correction_' . $correction->id . '_out',
-                    'attendance_time'=> $checkOutTime,
-                    'state'         => 1,
-                    'type'          => 1,
+                    'company_id' => $correction->company_id,
+                    'employee_id' => $employeeId,
+                    'device_id' => $correction->employee->device_id,
+                    'device_log_uid' => -($correction->id * 10 + 2), // e.g. -12 for correction 1 check-out
+                    'attendance_time' => $checkOutTime,
+                    'state' => 1,
+                    'type' => 1,
                 ]);
             }
         }
